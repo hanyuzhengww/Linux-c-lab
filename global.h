@@ -1,7 +1,7 @@
 #ifndef _GLOBAL_H
 #define _GLOBAL_H
 
-#include <sys/types.h>
+#include <sys/types.h>//基本系统数据类型
 #include <sys/socket.h>//linux下的socket函数，windows是winsock
 #include <stdio.h>
 #include <netinet/in.h>
