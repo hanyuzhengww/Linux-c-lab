@@ -2,7 +2,7 @@
 #define _GLOBAL_H
 
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/socket.h>//linux下的socket函数，windows是winsock
 #include <stdio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -18,11 +18,10 @@
 #include <unordered_map>
 #include <pthread.h>
 #include <set>
-#include <hiredis/hiredis.h>
+#include <hiredis/hiredis.h> //hiredis,c++连接会用到这个API
 #include <fstream>
-//以下新增
-#include<sys/epoll.h>
-#include<boost/bind.hpp>
+#include<sys/epoll.h>//线程池
+#include<boost/bind.hpp>//c++的boost库
 #include<boost/asio.hpp>
 #include<errno.h>
 using namespace std;
