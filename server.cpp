@@ -1,12 +1,12 @@
 #include "server.h"
 
-vector<bool> server::sock_arr(10000,false);
+vector<bool> server::sock_arr(10000,false);//进程支持的最大连接数 
 unordered_map<string,int> server::name_sock_map;//名字和套接字描述符
 unordered_map<string,string> server::from_to_map;//记录用户xx要向用户yy发送信息
 unordered_map<int,set<int> > server::group_map;//记录群号和套接字描述符集合
 pthread_mutex_t server::name_sock_mutx;//互斥锁，锁住需要修改name_sock_map的临界区
 pthread_mutex_t server::group_mutx;//互斥锁，锁住需要修改group_map的临界区
-pthread_mutex_t server::from_mutex;//自旋锁，锁住修改from_to_map的临界区
+pthread_mutex_t server::from_mutex;//互斥锁，锁住修改from_to_map的临界区
 
 server::server(int port,string ip):server_port(port),server_ip(ip){
     pthread_mutex_init(&name_sock_mutx, NULL); //创建互斥锁
@@ -20,7 +20,7 @@ server::~server(){
     }
     close(server_sockfd);
 }
-//将参数的文件描述符设为非阻塞
+//将参数的文件描述符设为非阻塞, 边缘触发，若不是非阻塞,进程就会一直阻塞
 void server::setnonblocking(int sock)  
 {  
     int opts;  
@@ -109,7 +109,7 @@ void server::run(){
                 cout<<"接收到读事件"<<endl;
 
                 string recv_str;
-                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //加入任务队列，处理事件
+                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //post加入任务队列，处理事件,bind绑定
             }  
         } 
     }  
@@ -177,7 +177,7 @@ void server::HandleRequest(int epollfd,int conn,string str,tuple<bool,string,str
     if(redis_target->err){
         redisFree(redis_target);
         cout<<"连接redis失败"<<endl;     
-    }
+    }//连接失败并不影响，无非就是没有存储要重新登陆
 
     //先接收cookie看看redis是否保存该用户的登录状态
     if(str.find("cookie:")!=str.npos){
@@ -342,7 +342,7 @@ void server::HandleRequest(int epollfd,int conn,string str,tuple<bool,string,str
                 break;
             }
         cout<<"用户"<<login_name<<"绑定群聊号为："<<num_str<<endl;
-        pthread_mutex_lock(&group_mutx);//上锁
+        pthread_mutex_lock(&group_mutx);//上锁，但是这里上锁可能会导致在发送群聊消息的过程中，由于被互斥锁锁住临界区，导致无法发送群聊消息，准备用读写锁来解决
         group_map[group_num].insert(conn);
         pthread_mutex_unlock(&group_mutx);//解锁
     }
@@ -378,8 +378,8 @@ void server::HandleRequest(int epollfd,int conn,string str,tuple<bool,string,str
     event.events=EPOLLIN|EPOLLET|EPOLLONESHOT;
     epoll_ctl(epollfd,EPOLL_CTL_MOD,conn,&event);
 
-    mysql_close(con);
-    if(!redis_target->err)
+    mysql_close(con);//关闭mysql连接
+    if(!redis_target->err)关闭redis连接
         redisFree(redis_target);
 
     //更新实参
