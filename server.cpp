@@ -71,7 +71,8 @@ void server::run(){
 
     /* 定义一个10线程的线程池 */
     boost::asio::thread_pool tp(10);
-
+    //边缘触发通常与非阻塞IO一起使用，其工作模式为：epoll_wait触发一次，在while（1）循环内非阻塞IO读取数据，直到缓冲区数据为空（保证了数据的完整性），
+    //内核才会继续调用epoll_wait等待事件发生。
     while(1){  
         cout<<"--------------------------"<<endl;
         cout<<"epoll_wait阻塞中"<<endl;
@@ -109,7 +110,7 @@ void server::run(){
                 cout<<"接收到读事件"<<endl;
 
                 string recv_str;
-                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //post加入任务队列，处理事件,bind绑定
+                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //post加入任务队列,处理事件,bind绑定
             }  
         } 
     }  
@@ -343,6 +344,7 @@ void server::HandleRequest(int epollfd,int conn,string str,tuple<bool,string,str
             }
         cout<<"用户"<<login_name<<"绑定群聊号为："<<num_str<<endl;
         pthread_mutex_lock(&group_mutx);//上锁，但是这里上锁可能会导致在发送群聊消息的过程中，由于被互斥锁锁住临界区，导致无法发送群聊消息，准备用读写锁来解决
+                                        //shared_mutex
         group_map[group_num].insert(conn);
         pthread_mutex_unlock(&group_mutx);//解锁
     }
