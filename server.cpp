@@ -1,6 +1,6 @@
 #include "server.h"
 
-vector<bool> server::sock_arr(10000,false);//进程支持的最大连接数 
+vector<bool> server::sock_arr(10000,false);//进程支持的最大连接数，可以查看
 unordered_map<string,int> server::name_sock_map;//名字和套接字描述符
 unordered_map<string,string> server::from_to_map;//记录用户xx要向用户yy发送信息
 unordered_map<int,set<int> > server::group_map;//记录群号和套接字描述符集合
@@ -13,7 +13,7 @@ server::server(int port,string ip):server_port(port),server_ip(ip){
     pthread_mutex_init(&group_mutx, NULL); //创建互斥锁
     pthread_mutex_init(&from_mutex, NULL); //创建互斥锁
 }
-server::~server(){
+server::~server(){//析构函数
     for(int i=0;i<sock_arr.size();i++){
         if(sock_arr[i])
             close(i);
@@ -31,7 +31,7 @@ void server::setnonblocking(int sock)
         exit(1);  
     }  
     opts = opts|O_NONBLOCK;  
-    if(fcntl(sock,F_SETFL,opts)<0)  
+    if(fcntl(sock,F_SETFL,opts)<0)  //出错
     {  
         perror("fcntl(sock,SETFL,opts)");  
         exit(1);  
