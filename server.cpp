@@ -110,7 +110,7 @@ void server::run(){
                 cout<<"接收到读事件"<<endl;
 
                 string recv_str;
-                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //post加入任务队列,处理事件,bind绑定
+                boost::asio::post(boost::bind(RecvMsg,epfd,sockfd)); //post加入任务队列,处理事件,bind绑定，boost::bind(函数名, 参数1，参数2，…)
             }  
         } 
     }  
@@ -381,7 +381,7 @@ void server::HandleRequest(int epollfd,int conn,string str,tuple<bool,string,str
     epoll_ctl(epollfd,EPOLL_CTL_MOD,conn,&event);
 
     mysql_close(con);//关闭mysql连接
-    if(!redis_target->err)关闭redis连接
+    if(!redis_target->err)//关闭redis连接
         redisFree(redis_target);
 
     //更新实参
